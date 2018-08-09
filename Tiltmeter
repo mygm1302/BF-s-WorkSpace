@@ -1,0 +1,52 @@
+package  {
+	import flash.events.Event;
+	import flash.geom.Vector3D;
+	import flash.geom.Matrix3D;
+	import flash.sensors.Accelerometer;
+	import flash.events.MouseEvent;
+	import flash.events.AccelerometerEvent
+	import flash.events.EventDispatcher;
+
+	public class Tiltmeter extends EventDispatcher{
+		var rotT=new Matrix3D;
+		var baseVector=new Vector3D(0,1,0);
+		var pointVector=new Vector3D(0,1,0);
+		var nowVector=new Vector3D(0,0,0);
+		var forceVector=new Vector3D(0,0,0);
+		var accel:Accelerometer = new Accelerometer();
+		public function Tiltmeter() //
+		{
+			accel.addEventListener(AccelerometerEvent.UPDATE, tiltCalc);
+		}
+		function tiltCalc(event:AccelerometerEvent):void
+		{
+			nowVector.x=event.accelerationX
+			nowVector.y=event.accelerationY
+			nowVector.z=event.accelerationZ
+			var angle=Vector3D.angleBetween(baseVector,pointVector)/Math.PI*180;
+			var axis=baseVector.crossProduct(pointVector);
+			rotT.identity();
+			rotT.appendRotation(360-angle,axis)
+			forceVector=rotT.deltaTransformVector(nowVector);
+			dispatchEvent(new tiltEvent(-forceVector.x,forceVector.y));
+		}
+		public function setPoint(){
+			pointVector=nowVector.clone()			
+		}
+	}
+	
+}
+	internal class TiltEvent extends Event{
+		var _tiltX;
+		var _tiltY;
+		public function TiltEvent(scale_x,scale_y) {
+			super("tilt");
+			_tiltX=scale_x;
+			_tiltY=scale_y;
+		}
+		public function get tiltX (){
+			return _tiltX;
+		}
+		public function get tiltY (){
+			return _tiltY;
+		}
